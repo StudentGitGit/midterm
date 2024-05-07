@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Товары</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        header, footer {
+            background-color: #333;
+            color: #fff;
+            padding: 10px 0;
+            text-align: center;
+        }
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+        nav ul li {
+            margin: 0 10px;
+        }
+        nav ul li a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        div#productList div, div#cart div {
+            background: #eee;
+            margin: 5px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+        .btn {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header class="bg-dark text-white py-2">
+        <h1>Товары</h1>
+        <nav>
+            <ul class="nav justify-content-center">
+                <li class="nav-item"><a class="nav-link text-white" href="index.html">Главная</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="about.html">О нас</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="contact.html">Контакты</a></li>
+                <li class="nav-item"><a class="nav-link text-white" href="products.html">Товары</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="container mt-4">
+        <section>
+            <h2>Наши товары</h2>
+            <input type="text" id="searchBox" class="form-control" placeholder="Поиск товаров...">
+            <select id="filterCategory" class="form-control">
+                <option value="">Все категории</option>
+                <option value="электроника">Электроника</option>
+                <option value="одежда">Одежда</option>
+                <option value="аксессуары">Аксессуары</option>
+            </select>
+            <button onclick="searchProducts()" class="btn btn-primary">Поиск</button>
+            <div id="productList" class="mt-3"></div>
+            <button onclick="addProduct()" class="btn btn-success">Добавить товар</button>
+        </section>
+        <section>
+            <h2>Корзина</h2>
+            <div id="cart"></div>
+        </section>
+    </main>
+
+    <footer class="bg-dark text-white py-2">
+        <p>© 2024 Наш веб-сайт</p>
+    </footer>
+
+    <script>
+        let products = JSON.parse(localStorage.getItem('products')) || [
+            { id: 1, name: "Наушники", price: 2000, category: "электроника" },
+            { id: 2, name: "Футболка", price: 500, category: "одежда" },
+            { id: 3, name: "Чехол для телефона", price: 300, category: "аксессуары" }
+        ];
+        let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+        function saveProducts() {
+            localStorage.setItem('products', JSON.stringify(products));
+        }
+
+        function displayProducts(productsToDisplay) {
+            const productList = document.getElementById('productList');
+            productList.innerHTML = '';
+            productsToDisplay.forEach(product => {
+                const productElement = document.createElement('div');
+                productElement.innerHTML = `
+                    <p>Название: ${product.name}</p>
+                    <p>Цена: ${product.price}$</p>
+                    <p>Категория: ${product.category}</p>
+                    <button onclick="editProduct(${product.id})">Изменить</button>
+                    <button onclick="removeProduct(${product.id})">Удалить</button>
+                    <button onclick="addToCart(${product.id})">Добавить в корзину</button>
+                `;
+                productList.appendChild(productElement);
+            });
+        }
+
+        function addProduct() {
+            const name = prompt("Введите название товара:");
+            const price = parseFloat(prompt("Введите цену товара:"));
+            const category = prompt("Введите категорию товара:");
+            const newProduct = {
+                id: products.length + 1,
+                name: name,
+                price: price,
+                category: category
+            };
+            products.push(newProduct);
+            saveProducts();
+            displayProducts(products);
+        }
+
+        function editProduct(id) {
+            const product = products.find(p => p.id === id);
+            if (product) {
+                product.name = prompt("Измените название товара:", product.name);
+                product.price = parseFloat(prompt("Измените цену товара:", product.price));
+                product.category = prompt("Измените категорию товара:", product.category);
+                saveProducts();
+                displayProducts(products);
+            }
+        }
+
+        function removeProduct(id) {
+            products = products.filter(p => p.id !== id);
+            saveProducts();
+            displayProducts(products);
+        }
+
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            cart.push({...product});
+            localStorage.setItem('cart', JSON.stringify(cart));
+            displayCart();
+        }
+
+        function displayCart() {
+            const cartElement = document.getElementById('cart');
+            cartElement.innerHTML = '';
+            cart.forEach(product => {
+                const productElement = document.createElement('div');
+                productElement.innerHTML = `
+                    <p>${product.name} - ${product.price}$</p>
+                    <button onclick="removeFromCart(${product.id})">Удалить из корзины</button>
+                `;
+                cartElement.appendChild(productElement);
+            });
+        }
+
+        function removeFromCart(productId) {
+            const productIndex = cart.findIndex(p => p.id === productId);
+            if (productIndex !== -1) {
+                cart.splice(productIndex, 1);
+                localStorage.setItem('cart', JSON.stringify(cart));
+            }
+            displayCart();
+        }
+
+        function searchProducts() {
+            const searchText = document.getElementById('searchBox').value.toLowerCase();
+            const categoryFilter = document.getElementById('filterCategory').value;
+            const filteredProducts = products.filter(product => {
+                return (product.name.toLowerCase().includes(searchText) || !searchText) &&
+                       (product.category === categoryFilter || !categoryFilter);
+            });
+            displayProducts(filteredProducts);
+        }
+
+        displayProducts(products);
+        displayCart();
+    </script>
+</body>
+</html>
